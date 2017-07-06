@@ -1,5 +1,4 @@
-from types import StringType
-
+import types
 import io
 import nltk
 import os
@@ -39,7 +38,7 @@ def prepare_text(raw_text, method=1, bigrams=0):
 
     :rtype: features
     """
-    assert isinstance(raw_text, StringType), "text is not a string: %r" % raw_text
+    assert isinstance(raw_text, types.StringType), "text is not a string: %r" % raw_text
     raw = raw_text
 
     porter = nltk.PorterStemmer()
