@@ -1,5 +1,7 @@
 import os
 import sys
+import csv
+from scipy import spatial
 from tools import *
 
 
@@ -9,24 +11,39 @@ def main():
     train_folder = sys.argv[2]
     method = sys.argv[3]
     bigram = sys.argv[4]
+    output_path = sys.argv[5]
 
+    # read file paths from train folder
     query = sorted([os.path.join(train_folder, f) for f in os.listdir(train_folder) if f.endswith('.txt')])
 
+    # load train features
     train_features = []
     for q in query:
-        with io.open(q, "r", encoding="utf-8", errors='ignore') as doc:
-            raw = doc.read()
-        dtm1 = ExtractFeatures(raw, method, bigram)
-        train_features = train_features + dtm1.load_text()
+        dtm1 = ExtractFeatures(method, bigram)
+        train_features = train_features + dtm1.extract_features_from_file(q)
 
+    # initialize file writer and write the header with the document names
+    # a 'cosine_values.csv' file will be written inside 'output_path' folder
+    docs = sorted(set(w[0] for w in train_features))
+    header = ['turn'] + docs
+    csm_file = output_path + '/' + 'cosine_values.csv'
+    with open(csm_file, 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow(header)
+
+    # load test text file
     with io.open(test_file, "r", encoding="utf-8", errors='ignore') as doc:
         raw = doc.read()
 
-    utterances = raw.split(":")
+    raw = raw.split(":")
 
-    for u in utterances:
-        dtm2 = ExtractFeatures(u, method, bigram)
-        test_features = dtm2.load_text()
+    names = [raw[i] for i in range(0, len(raw), 2)]
+    utterances = [raw[i] for i in range(1, len(raw), 2)]
+
+    for i in xrange(len(utterances)):
+        dtm2 = ExtractFeatures(method, bigram)
+        name = names[i] + "_" + str(i)
+        test_features = dtm2.extract_features_from_text(utterances[i], name)
 
         features = test_features + train_features
 
@@ -41,14 +58,20 @@ def main():
             a = [word for category, word in features if category == d]
             dtv = [a.count(word) for word in vocabulary]  # vector of frequencies per vocabulary term
             dtm.append(dtv)
-        # print dtm
 
         dv = []
-        for j in range(1, len(documents)):
-            d = 1 - spatial.distance.cosine(dtm[0], dtm[j])
+        for j in range(0, len(documents)-1):
+            # print documents[-1], documents[j]
+            d = 1 - spatial.distance.cosine(dtm[-1], dtm[j])
             dv.append(d)
 
-        print dv
+        line = [documents[-1]] + dv
+
+        with open(csm_file, 'a') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow(line)
+        print line
+        print "Finished text " + str(i + 1) + " of " + str(len(utterances))
 
 if __name__ == '__main__':
     main()
