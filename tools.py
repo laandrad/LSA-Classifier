@@ -4,8 +4,38 @@ import re
 import nltk
 
 
+class DTM:
+    """"This is an object for quantitative representation of documents"""
+
+    def __init__(self, vocabulary, documents, features):
+        self.vocabulary = vocabulary
+        self.documents = documents
+        self.features = features
+
+    def compute_dtm(self):
+        # 1. extract term frequencies from each text document - a.k.a. frequency vectors
+        # 2. bind all frequency vectors into a dtm matrix
+        dtm = {}
+        for d in self.documents:
+            a = [word for doc, word in self.features if doc == d]
+            dtv = [a.count(word) for word in self.vocabulary]  # vector of frequencies per vocabulary term
+            print d, sum(dtv)
+            dtm[d] = dtv
+
+        return dtm
+
+    def compute_dtv(self):
+        dtv = {}
+        a = [word for doc, word in self.features]
+        a = [a.count(word) for word in self.vocabulary]
+        dtv[self.documents] = a
+        print self.documents, sum(a)
+
+        return dtv
+
+
 class ExtractFeatures:
-    """This is an object for text-mining"""
+    """This is an object for feature extraction"""
 
     def __init__(self, method, bigrams):
         # self.data = []
